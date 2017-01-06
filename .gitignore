@@ -10,3 +10,4 @@
 
 # mpeltonen/sbt-idea plugin
 .idea
+web_search_engine.iml

@@ -1,11 +1,8 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Scanner;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
+@SuppressWarnings("WeakerAccess")
 public class MyEngine implements SearchEngine {
 
     private static final int DEFAULT_SIZE = 5000;
@@ -13,46 +10,35 @@ public class MyEngine implements SearchEngine {
     private int size = 0;
     private int max;
 
-    // new fields
-    private HashSet<String> words = new HashSet<String>();
-    ;
-    private TreeMap<String, TreeSet<String>> index = new TreeMap<String, TreeSet<String>>();
-    private TreeSet<String> checked = new TreeSet<String>();
-    private LinkedList<String> toDoQueue = new LinkedList<String>();
+    private TreeMap<String, TreeSet<String>> index = new TreeMap<>();
     private boolean breadthFirst = false;
     private boolean depthFirst = true;
 
-    public MyEngine() { // DONE
+    public MyEngine() {
         this(DEFAULT_SIZE);
     }
 
-    public MyEngine(int theMax) { // DONE
+    public MyEngine(int theMax) {
         setMax(theMax);
-        prepereWordCheck();
     }
 
-    private void prepereWordCheck() {
-        Scanner wordsIn = null;
-        Scanner stopIn = null;
-        TreeSet<String> stopwords = new TreeSet<String>();
-        try {
-            wordsIn = new Scanner(new File("words.txt"));
-            stopIn = new Scanner(new File("stopwords.txt"));
+    private HashSet<String> prepareWordCheck() {
+        HashSet<String> words = new HashSet<>();
+        TreeSet<String> stopwords = new TreeSet<>();
+        try (Scanner wordsIn = new Scanner(new File("words.txt"));
+             Scanner stopIn = new Scanner(new File("stopwords.txt"))) {
             while (wordsIn.hasNextLine())
                 words.add(wordsIn.nextLine());
             while (stopIn.hasNextLine())
                 stopwords.add(stopIn.nextLine());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } finally {
-            wordsIn.close();
-            stopIn.close();
         }
         words.removeAll(stopwords);
-        stopwords = null;
+        return words;
     }
 
-    public void setMax(int theMax) { // DONE
+    public void setMax(int theMax) {
         max = theMax;
     }
 
@@ -72,13 +58,17 @@ public class MyEngine implements SearchEngine {
         return depthFirst;
     }
 
-    public void crawlFrom(String webAdress) {
+    public void crawlFrom(String webAddress) {
+
+        LinkedList<String> toDoQueue = new LinkedList<>();
+        TreeSet<String> checked = new TreeSet<>();
+        HashSet<String> words = prepareWordCheck();
 
         TreeSet<String> links;
         WebPageReader w;
         while (this.size() < max) {
-            w = new WebPageReader(webAdress);
-            checked.add(webAdress);
+            w = new WebPageReader(webAddress);
+            checked.add(webAddress);
             w.run();
             w.getLinks().removeAll(checked);
             if (breadthFirst) for (String link : w.getLinks()) toDoQueue.addLast(link);
@@ -86,28 +76,27 @@ public class MyEngine implements SearchEngine {
 
             for (String word : w.getWords()) {
                 if (words.contains(word)) {
-                    links = new TreeSet<String>();
+                    links = new TreeSet<>();
                     if (index.containsKey(word))
                         links.addAll(index.get(word));
-                    links.add(webAdress);
+                    links.add(webAddress);
                     index.put(word, links);
                     size++;
                     if (this.size() == max) break;
-                    links = null;
                     System.out.println(this.size());
                 }
             }
 
-            webAdress = toDoQueue.remove();
-//			System.out.println(webAdress);
+            webAddress = toDoQueue.remove();
+			System.out.println(webAddress);
         }
-//				System.out.println("Number of words: " + index.size());
+        System.out.println("Number of words: " + index.size());
+        for (Map.Entry<String, TreeSet<String>> entry : index.entrySet()) {
+            String key = entry.getKey();
+            TreeSet<String> value = entry.getValue();
 
-        toDoQueue = null;
-        checked = null;
-        links = null;
-        words = null;
-        w = null;
+            System.out.printf("%s : %s\n", key, value);
+        }
         System.gc();
     }
 
@@ -140,7 +129,7 @@ public class MyEngine implements SearchEngine {
         engine.crawlFrom(AFTEN);
         System.out.printf("finish. Size of index = %d%n", engine.size());
 
-        System.out.printf("Occurences of \"%s\":%n", TARGET);
+        System.out.printf("Occurrences of \"%s\":%n", TARGET);
         String[] results = engine.searchHits(TARGET);
         for (String s : results)
             System.out.println(s);
