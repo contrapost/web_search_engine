@@ -9,16 +9,16 @@ public class MyEngine implements SearchEngine {
     private int size = 0;
     private int max;
     private HashSet<String> dictionary;
-    public static HashMap<String, HashSet<String>> index;
+    static HashMap<String, HashSet<String>> index;
     private boolean breadthFirst = true;
     private LinkedList<String> linksToCheck;
     private HashSet<String> visitedLinks;
 
-    public MyEngine(){ // DONE
+    MyEngine(){ // DONE
         this(DEFAULT_SIZE);
     }
 
-    public MyEngine(int theMax) { // DONE
+    private MyEngine(int theMax) { // DONE
         setMax(theMax);
         dictionary = buildDictionary();
         index = new HashMap<>();
@@ -52,7 +52,7 @@ public class MyEngine implements SearchEngine {
         return true;
     }
 
-    public void crawlFrom(String webAddress){ // TODO
+    public void crawlFrom(String webAddress){ // DONE
 
         WebPageReader wpr = new WebPageReader(webAddress);
         visitedLinks.add(webAddress);
@@ -62,7 +62,7 @@ public class MyEngine implements SearchEngine {
 
         addNewLinks(wpr.getLinks());
 
-        if(wpr.getLinks().size() == 0 || size() == max) return;
+        if(linksToCheck.size() == 0 || size() == max) return;
 
         crawlFrom(linksToCheck.remove());
     }
@@ -87,15 +87,15 @@ public class MyEngine implements SearchEngine {
                 if(!index.get(w).contains(webAddress)){
                     HashSet<String> links = index.get(w);
                     links.add(webAddress);
-                    size++;
                     index.replace(w, links);
                 }
             } else {
                 HashSet<String> newLink = new HashSet<>(1);
                 newLink.add(webAddress);
                 index.put(w, newLink);
-                size++;
             }
+            size++;
+            System.out.println(size);
         }
     }
 
@@ -121,13 +121,13 @@ public class MyEngine implements SearchEngine {
      * Simple test code
      */
     public static void main(String[] args){
-        String AFTEN = "https://wikipedia.org";
+        String webAddress = "http://www.bbc.com/";
         String TARGET = "og";
 
         MyEngine engine = new MyEngine(10000);
-        engine.setBreadthFirst();
+        engine.setDepthFirst();
         System.out.print("Searching, start....");
-        engine.crawlFrom(AFTEN);
+        engine.crawlFrom(webAddress);
         System.out.printf("finish. Size of index = %d%n",engine.size());
 
         System.out.printf("Occurrences of \"%s\":%n",TARGET);
