@@ -9,7 +9,7 @@ public class MyEngine implements SearchEngine {
     private int size = 0;
     private int max;
     private HashSet<String> dictionary;
-    private static HashMap<String, HashSet<String>> index;
+    public static HashMap<String, HashSet<String>> index;
     private boolean breadthFirst = true;
     private LinkedList<String> linksToCheck;
     private HashSet<String> visitedLinks;

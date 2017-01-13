@@ -1,5 +1,4 @@
-import java.util.Scanner;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class SimpleFrontEnd {
 
@@ -31,6 +30,13 @@ public class SimpleFrontEnd {
         System.out.println("\nBuilding search index....");
         engine.crawlFrom(WIKIPEDIA);
         System.out.printf("%n Number of occurences = %d%n Estimated memory footprint = %.1fMB%n I am ready for searching.%n",engine.size(),memoryFootprintInMegaBytes());
+        for (Map.Entry<String, HashSet<String>> entry : MyEngine.index.entrySet()) {
+            String key = entry.getKey();
+            HashSet<String> value = entry.getValue();
+
+            System.out.printf("%s : %s\n", key, value);
+        }
+        System.gc();
     }
 
     public static void main(String[] args){
