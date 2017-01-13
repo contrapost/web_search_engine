@@ -2,105 +2,104 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
-@SuppressWarnings("WeakerAccess")
 public class MyEngine implements SearchEngine {
 
     private static final int DEFAULT_SIZE = 5000;
 
     private int size = 0;
     private int max;
+    private HashSet<String> dictionary;
+    static HashMap<String, HashSet<String>> index;
+    private boolean breadthFirst = true;
+    private LinkedList<String> linksToCheck;
+    private HashSet<String> visitedLinks;
 
-    private TreeMap<String, TreeSet<String>> index = new TreeMap<>();
-    private boolean breadthFirst = false;
-    private boolean depthFirst = true;
-
-    public MyEngine() {
+    MyEngine(){ // DONE
         this(DEFAULT_SIZE);
     }
 
-    public MyEngine(int theMax) {
+    private MyEngine(int theMax) { // DONE
         setMax(theMax);
+        dictionary = buildDictionary();
+        index = new HashMap<>();
+        linksToCheck = new LinkedList<>();
+        visitedLinks = new HashSet<>();
     }
 
-    private HashSet<String> prepareWordCheck() {
-        HashSet<String> words = new HashSet<>();
-        TreeSet<String> stopwords = new TreeSet<>();
-        try (Scanner wordsIn = new Scanner(new File("words.txt"));
-             Scanner stopIn = new Scanner(new File("stopwords.txt"))) {
-            while (wordsIn.hasNextLine())
-                words.add(wordsIn.nextLine());
-            while (stopIn.hasNextLine())
-                stopwords.add(stopIn.nextLine());
+    private HashSet<String> buildDictionary() {
+        HashSet<String> dictionary = new HashSet<>();
+        try (Scanner words = new Scanner(new File("words.txt"));
+            Scanner stopwords = new Scanner(new File("stopwords.txt"))) {
+            while (words.hasNextLine()) dictionary.add(words.nextLine());
+            while (stopwords.hasNextLine()) dictionary.remove(stopwords.nextLine());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        words.removeAll(stopwords);
-        return words;
+        return dictionary;
     }
 
-    public void setMax(int theMax) {
+    public void setMax(int theMax){ // DONE
         max = theMax;
     }
 
-    public boolean setBreadthFirst() {
-        if (depthFirst) {
-            breadthFirst = true;
-            depthFirst = false;
-        }
-        return breadthFirst;
+    public boolean setBreadthFirst(){ // DONE
+        if(!breadthFirst) breadthFirst = true;
+        return true;
     }
 
-    public boolean setDepthFirst() {
-        if (breadthFirst) {
-            breadthFirst = false;
-            depthFirst = true;
-        }
-        return depthFirst;
+    public boolean setDepthFirst(){ // DONE
+        if(breadthFirst) breadthFirst = false;
+        return true;
     }
 
-    public void crawlFrom(String webAddress) {
+    public void crawlFrom(String webAddress){ // DONE
 
-        LinkedList<String> toDoQueue = new LinkedList<>();
-        TreeSet<String> checked = new TreeSet<>();
-        HashSet<String> words = prepareWordCheck();
+        WebPageReader wpr = new WebPageReader(webAddress);
+        visitedLinks.add(webAddress);
+        wpr.run();
 
-        TreeSet<String> links;
-        WebPageReader w;
-        while (this.size() < max) {
-            w = new WebPageReader(webAddress);
-            checked.add(webAddress);
-            w.run();
-            w.getLinks().removeAll(checked);
-            if (breadthFirst) for (String link : w.getLinks()) toDoQueue.addLast(link);
-            else for (String link : w.getLinks()) toDoQueue.addFirst(link);
+        addNewWords(wpr.getWords(), webAddress);
 
-            for (String word : w.getWords()) {
-                if (words.contains(word)) {
-                    links = new TreeSet<>();
-                    if (index.containsKey(word))
-                        links.addAll(index.get(word));
-                    links.add(webAddress);
-                    index.put(word, links);
-                    size++;
-                    if (this.size() == max) break;
-                    System.out.println(this.size());
-                }
+        addNewLinks(wpr.getLinks());
+
+        if(linksToCheck.size() == 0 || size() == max) return;
+
+        crawlFrom(linksToCheck.remove());
+    }
+
+    private void addNewLinks(Set<String> links) {
+        for(String l : links) {
+            if(visitedLinks.contains(l)) continue;
+
+            if(breadthFirst) {
+                linksToCheck.addLast(l);
+            } else {
+                linksToCheck.addFirst(l);
             }
-
-            webAddress = toDoQueue.remove();
-			System.out.println(webAddress);
         }
-        System.out.println("Number of words: " + index.size());
-        for (Map.Entry<String, TreeSet<String>> entry : index.entrySet()) {
-            String key = entry.getKey();
-            TreeSet<String> value = entry.getValue();
-
-            System.out.printf("%s : %s\n", key, value);
-        }
-        System.gc();
     }
 
-    public String[] searchHits(String target) {
+    private void addNewWords(Set<String> words, String webAddress) {
+        for(String w : words) {
+            if(!dictionary.contains(w)) continue;
+            if(size == max) return;
+            if(index.containsKey(w)) {
+                if(!index.get(w).contains(webAddress)){
+                    HashSet<String> links = index.get(w);
+                    links.add(webAddress);
+                    index.replace(w, links);
+                }
+            } else {
+                HashSet<String> newLink = new HashSet<>(1);
+                newLink.add(webAddress);
+                index.put(w, newLink);
+            }
+            size++;
+            System.out.println(size);
+        }
+    }
+
+    public String[] searchHits(String target){ // DONE
         String[] out;
         if (index.containsKey(target)) {
             out = new String[index.get(target).size()];
@@ -113,25 +112,34 @@ public class MyEngine implements SearchEngine {
         }
     }
 
-    public int size() { // DONE
+    public int size(){ // DONE
         return size;
     }
+
 
     /*
      * Simple test code
      */
-    public static void main(String[] args) {
-        String AFTEN = "https://en.wikipedia.org/wiki/Main_Page";
-        String TARGET = "accent";
+    public static void main(String[] args){
+        String webAddress = "http://www.bbc.com/";
+        String TARGET = "og";
 
-        MyEngine engine = new MyEngine();
+        MyEngine engine = new MyEngine(10000);
+        engine.setDepthFirst();
         System.out.print("Searching, start....");
-        engine.crawlFrom(AFTEN);
-        System.out.printf("finish. Size of index = %d%n", engine.size());
+        engine.crawlFrom(webAddress);
+        System.out.printf("finish. Size of index = %d%n",engine.size());
 
-        System.out.printf("Occurrences of \"%s\":%n", TARGET);
+        System.out.printf("Occurrences of \"%s\":%n",TARGET);
         String[] results = engine.searchHits(TARGET);
-        for (String s : results)
+        for (String s: results)
             System.out.println(s);
+
+        for (Map.Entry<String, HashSet<String>> entry : index.entrySet()) {
+            String key = entry.getKey();
+            HashSet<String> value = entry.getValue();
+
+            System.out.printf("%s : %s\n", key, value);
+        }
     }
 }
