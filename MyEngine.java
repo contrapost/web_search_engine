@@ -2,6 +2,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
+/*
+*
+* Original version made in 2015
+*
+* */
 @SuppressWarnings("WeakerAccess")
 public class MyEngine implements SearchEngine {
 
