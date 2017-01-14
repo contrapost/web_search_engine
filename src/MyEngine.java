@@ -15,8 +15,8 @@ public class MyEngine implements SearchEngine {
 
     private int size = 0;
     private int max;
-    private HashSet<String> dictionary;
-    static HashMap<String, HashSet<String>> index;
+    private HashSet<String> wordsToIndex;
+    private HashMap<String, HashSet<String>> index;
     private boolean breadthFirst = true;
     private LinkedList<String> linksToCheck;
     private HashSet<String> visitedLinks;
@@ -30,7 +30,7 @@ public class MyEngine implements SearchEngine {
 
     private MyEngine(int theMax) { // DONE
         setMax(theMax);
-        dictionary = buildDictionary();
+        wordsToIndex = buildDictionary();
         index = new HashMap<>();
         linksToCheck = new LinkedList<>();
         visitedLinks = new HashSet<>();
@@ -106,7 +106,7 @@ public class MyEngine implements SearchEngine {
 
     private void addNewWords(Set<String> words, String webAddress) {
         for(String w : words) {
-            if(!dictionary.contains(w)) continue;
+            if(!wordsToIndex.contains(w)) continue;
             if(size == max) return;
             if(index.containsKey(w)) {
                 HashSet<String> links = index.get(w);
@@ -136,6 +136,11 @@ public class MyEngine implements SearchEngine {
 
     public int size(){ // DONE
         return size;
+    }
+
+    @Override
+    public HashMap<String, HashSet<String>> getIndex() {
+        return index;
     }
 
 
@@ -171,7 +176,7 @@ public class MyEngine implements SearchEngine {
                 try {
 
                     for (double progressPercentage = 0.0; progressPercentage < 1.0; progressPercentage += 0.01) {
-                        final int width = 50; // progress bar width in chars
+                        final int width = 50;
 
                         System.out.print("\r[");
                         int i = 0;

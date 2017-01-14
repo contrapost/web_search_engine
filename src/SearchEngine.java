@@ -1,5 +1,8 @@
 package src;
 
+import java.util.HashMap;
+import java.util.HashSet;
+
 public interface SearchEngine {
 
     /**
@@ -46,4 +49,6 @@ public interface SearchEngine {
      * word-occurences.
      */
     int size();
+
+    HashMap<String, HashSet<String>> getIndex();
 }

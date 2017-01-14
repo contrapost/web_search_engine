@@ -201,7 +201,6 @@ public class WebPageReader implements Runnable {
 
 
     private static void basicTest () {
-        //src.WebPageReader wp = new src.WebPageReader ("https://en.wikipedia.org");
         WebPageReader wp = new WebPageReader ("http://aftenposten.no");
         wp.run ();
 
