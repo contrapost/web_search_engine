@@ -126,12 +126,11 @@ public class MyEngine implements SearchEngine {
         if (index.containsKey(target)) {
             out = new String[index.get(target).size()];
             index.get(target).toArray(out);
-            return out;
         } else {
             out = new String[1];
             out[0] = "no results";
-            return out;
         }
+        return out;
     }
 
     public int size(){ // DONE
