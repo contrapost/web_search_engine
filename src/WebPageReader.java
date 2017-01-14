@@ -1,3 +1,5 @@
+package src;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Scanner;
@@ -199,7 +201,7 @@ public class WebPageReader implements Runnable {
 
 
     private static void basicTest () {
-        //WebPageReader wp = new WebPageReader ("https://en.wikipedia.org");
+        //src.WebPageReader wp = new src.WebPageReader ("https://en.wikipedia.org");
         WebPageReader wp = new WebPageReader ("http://aftenposten.no");
         wp.run ();
 

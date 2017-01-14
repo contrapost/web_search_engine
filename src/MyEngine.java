@@ -1,6 +1,13 @@
+package src;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+
+/*
+* Progress bar was borrowed from http://stackoverflow.com/a/1001340/5552809
+* Code to stop a thread was borrowed from http://stackoverflow.com/a/10961760/5552809
+* */
 
 public class MyEngine implements SearchEngine {
 
@@ -13,6 +20,9 @@ public class MyEngine implements SearchEngine {
     private boolean breadthFirst = true;
     private LinkedList<String> linksToCheck;
     private HashSet<String> visitedLinks;
+    private Thread progressBarThread;
+    private ProgressBar progressBar;
+    private boolean firstStepOfCrawling = true;
 
     MyEngine(){ // DONE
         this(DEFAULT_SIZE);
@@ -24,6 +34,8 @@ public class MyEngine implements SearchEngine {
         index = new HashMap<>();
         linksToCheck = new LinkedList<>();
         visitedLinks = new HashSet<>();
+        progressBar = new ProgressBar();
+        progressBarThread = new Thread(progressBar);
     }
 
     private HashSet<String> buildDictionary() {
@@ -54,6 +66,11 @@ public class MyEngine implements SearchEngine {
 
     public void crawlFrom(String webAddress){ // DONE
 
+        if(firstStepOfCrawling) {
+            progressBarThread.start();
+            firstStepOfCrawling = false;
+        }
+
         WebPageReader wpr = new WebPageReader(webAddress);
         visitedLinks.add(webAddress);
         wpr.run();
@@ -62,7 +79,15 @@ public class MyEngine implements SearchEngine {
 
         addNewLinks(wpr.getLinks());
 
-        if(linksToCheck.size() == 0 || size() == max) return;
+        if(linksToCheck.size() == 0 || size() == max) {
+            progressBar.terminate();
+            try {
+                progressBarThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
 
         crawlFrom(linksToCheck.remove());
     }
@@ -84,18 +109,15 @@ public class MyEngine implements SearchEngine {
             if(!dictionary.contains(w)) continue;
             if(size == max) return;
             if(index.containsKey(w)) {
-                if(!index.get(w).contains(webAddress)){
-                    HashSet<String> links = index.get(w);
-                    links.add(webAddress);
-                    index.replace(w, links);
-                }
+                HashSet<String> links = index.get(w);
+                links.add(webAddress);
+                index.replace(w, links);
             } else {
                 HashSet<String> newLink = new HashSet<>(1);
                 newLink.add(webAddress);
                 index.put(w, newLink);
             }
             size++;
-            System.out.println(size);
         }
     }
 
@@ -126,20 +148,44 @@ public class MyEngine implements SearchEngine {
 
         MyEngine engine = new MyEngine(10000);
         engine.setDepthFirst();
-        System.out.print("Searching, start....");
+        System.out.print("Searching, start....\n");
         engine.crawlFrom(webAddress);
-        System.out.printf("finish. Size of index = %d%n",engine.size());
+        System.out.printf("\nfinish. Size of index = %d%n",engine.size());
 
         System.out.printf("Occurrences of \"%s\":%n",TARGET);
         String[] results = engine.searchHits(TARGET);
         for (String s: results)
             System.out.println(s);
+    }
 
-        for (Map.Entry<String, HashSet<String>> entry : index.entrySet()) {
-            String key = entry.getKey();
-            HashSet<String> value = entry.getValue();
+    private class ProgressBar implements Runnable {
+        private volatile boolean running = true;
 
-            System.out.printf("%s : %s\n", key, value);
+        void terminate() {
+            running = false;
+        }
+
+        @Override
+        public void run() {
+            while (running) {
+                try {
+
+                    for (double progressPercentage = 0.0; progressPercentage < 1.0; progressPercentage += 0.01) {
+                        final int width = 50; // progress bar width in chars
+
+                        System.out.print("\r[");
+                        int i = 0;
+                        for (; i <= (int)(progressPercentage*width); i++) {
+                            System.out.print(".");
+                        }
+                        for (; i < width; i++) {
+                            System.out.print(" ");
+                        }
+                        System.out.print("]");
+                        Thread.sleep(20);
+                    }
+                } catch (InterruptedException ignored) {}
+            }
         }
     }
 }

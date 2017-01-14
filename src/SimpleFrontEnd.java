@@ -1,9 +1,11 @@
+package src;
+
 import java.util.*;
 
 public class SimpleFrontEnd {
 
     private static final String WIKIPEDIA = /*"http://www.bbc.com/" */"http://www.dmoz.org/";
-    private static final int MAX = 100_000;
+    private static final int MAX = 10_000;
     private static final Scanner STDIN = new Scanner(System.in);
 
     private static SearchEngine engine = new MyEngine();
@@ -27,15 +29,15 @@ public class SimpleFrontEnd {
 
     private static void buildIndex(){
         engine.setMax(MAX);
-        System.out.println("\nBuilding search index....");
+        System.out.println("\nBuilding search index");
         engine.crawlFrom(WIKIPEDIA);
         System.out.printf("%n Number of occurrences = %d%n Estimated memory footprint = %.1fMB%n I am ready for searching.%n",engine.size(),memoryFootprintInMegaBytes());
-        for (Map.Entry<String, HashSet<String>> entry : MyEngine.index.entrySet()) {
+/*        for (Map.Entry<String, HashSet<String>> entry : MyEngine.index.entrySet()) {
             String key = entry.getKey();
             HashSet<String> value = entry.getValue();
 
             System.out.printf("%s : %s\n", key, value);
-        }
+        }*/
         HashSet<String> links = new HashSet<>();
         for(HashSet<String> h : MyEngine.index.values()) links.addAll(h);
         System.out.println("Number of links: " + links.size());
